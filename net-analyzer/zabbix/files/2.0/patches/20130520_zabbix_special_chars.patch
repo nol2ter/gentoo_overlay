@@ -1,0 +1,12 @@
+--- src/libs/zbxsysinfo/sysinfo.c_org	2013-05-20 17:41:07.931003191 +0900
++++ src/libs/zbxsysinfo/sysinfo.c	2013-05-20 17:42:21.021006676 +0900
+@@ -273,7 +273,8 @@
+ 	char		buf[MAX_STRING_LEN];
+ 	char		command[MAX_STRING_LEN];
+ 	char		*pl, *pr;
+-	const char	suppressed_chars[] = "\\'\"`*?[]{}~$!&;()<>|#@", *c;
++	//const char	suppressed_chars[] = "\\'\"`*?[]{}~$!&;()<>|#@", *c;
++	const char	suppressed_chars[] = "\\'\"`*?[]{}~$&;()<>|#@", *c;
+ 
+ 	assert(out);
+ 

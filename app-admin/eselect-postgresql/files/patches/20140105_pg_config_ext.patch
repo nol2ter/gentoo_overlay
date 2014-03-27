@@ -1,0 +1,28 @@
+--- eselect-postgresql-1.2.0/postgresql.eselect	2013-07-29 20:24:10.000000000 +0900
++++ eselect-postgresql-1.2.0-r1/postgresql.eselect	2014-01-05 03:18:51.000000000 +0900
+@@ -186,6 +186,7 @@
+ 	local sources=(
+ 		"${B_PATH}"/include/postgresql-${SLOT}
+ 		"${B_PATH}"/include/postgresql-${SLOT}/libpq-fe.h
++		"${B_PATH}"/include/postgresql-${SLOT}/pg_config_ext.h
+ 		"${B_PATH}"/include/postgresql-${SLOT}/pg_config_manual.h
+ 		"${B_PATH}"/include/postgresql-${SLOT}/libpq
+ 		"${B_PATH}"/include/postgresql-${SLOT}/postgres_ext.h
+@@ -193,6 +194,7 @@
+ 	local targets=(
+ 		"${B_PATH}"/include/postgresql
+ 		"${B_PATH}"/include/libpq-fe.h
++		"${B_PATH}"/include/pg_config_ext.h
+ 		"${B_PATH}"/include/pg_config_manual.h
+ 		"${B_PATH}"/include/libpq
+ 		"${B_PATH}"/include/postgres_ext.h
+@@ -209,6 +211,9 @@
+ 		[[ -e ${targets[$i]} ]] && \
+ 			die -q "The target '${targets[$i]}' exists and could not be removed!"
+ 
++		# Some headers are present only in specific versions of PostgreSQL
++		[[ -e ${sources[$i]} ]] || continue
++
+ 		# Create relative links so that they work both here and inside the new
+ 		# root if $ROOT is not "/"
+ 		rel_source=$(relative_name "${sources[$i]}" "$(dirname "${targets[$i]}")")

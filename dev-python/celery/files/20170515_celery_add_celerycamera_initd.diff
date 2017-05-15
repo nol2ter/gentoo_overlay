@@ -1,0 +1,89 @@
+--- files/celery.initd-r2_org	2017-03-01 05:43:13.000000000 +0900
++++ files/celery.initd-r2	2017-05-15 17:09:26.212998076 +0900
+@@ -20,14 +20,21 @@
+ CELERYBEAT_LOG_FILE=${CELERYBEAT_LOG_FILE:-"/var/log/celery/celerybeat.log"}
+ CELERYBEAT_LOG_LEVEL=${CELERYBEAT_LOG_LEVEL:-"INFO"}
+ 
++CELERYCAMERA_ENABLED=${CELERYCAMERA_ENABLED:-"no"}
++CELERYCAMERA_PID_FILE=${CELERYCAMERA_PID_FILE:-"/run/celery/celerycamera.pid"}
++CELERYCAMERA_LOG_FILE=${CELERYCAMERA_LOG_FILE:-"/var/log/celery/celerycamera.log"}
++CELERYCAMERA_LOG_LEVEL=${CELERYCAMERA_LOG_LEVEL:-"INFO"}
++
+ export CELERY_LOADER
+ 
+ CELERYD_MULTI=${CELERYD_MULTI:-"celery multi"}
+ CELERYCTL=${CELERYCTL:-"celery"}
+ CELERYBEAT=${CELERYBEAT:-"celery beat"}
++CELERYCAMERA=${CELERYBEAT:-"celery events"}
+ 
+ CELERYD_OPTS="${CELERYD_OPTS}"
+ CELERYBEAT_OPTS="${CELERYBEAT_OPTS} -f ${CELERYBEAT_LOG_FILE} -l ${CELERYBEAT_LOG_LEVEL}"
++CELERYCAMERA_OPTS="${CELERYCAMERA_OPTS} -f ${CELERYCAMERA_LOG_FILE} -l ${CELERYCAMERA_LOG_LEVEL}"
+ 
+ create_dirs() {
+ 	local logfile="${1}"
+@@ -58,6 +65,9 @@
+ 	yesno "${CELERYBEAT_ENABLED}" && \
+ 		create_dirs "${CELERYBEAT_LOG_FILE}" "${CELERYBEAT_PID_FILE}"
+ 
++	yesno "${CELERYCAMERA_ENABLED}" && \
++		create_dirs "${CELERYCAMERA_LOG_FILE}" "${CELERYCAMERA_PID_FILE}"
++
+ 	return 0
+ }
+ 
+@@ -148,6 +158,28 @@
+ 	eend ${?}
+ }
+ 
++# celerycamera
++start_camera() {
++	yesno "${CELERYCAMERA_ENABLED}" || return 0
++
++	ebegin "Starting celerycamera"
++	${CELERYCAMERA} ${CELERYCAMERA_OPTS} ${DAEMON_OPTS} --detach \
++		--pidfile="${CELERYCAMERA_PID_FILE}"
++	eend ${?}
++}
++
++stop_camera() {
++	yesno "${CELERYCAMERA_ENABLED}" || return 0
++
++	ebegin "Stopping celerycamera"
++	if [ -f "${CELERYCAMERA_PID_FILE}" ]; then
++		wait_pid "${CELERYCAMERA_PID_FILE}"
++	else
++		ewarn "not running"
++	fi
++	eend ${?}
++}
++
+ 
+ start() {
+ 	local cr=0
+@@ -159,7 +191,8 @@
+ 
+ 	celery_chdir && \
+ 		start_workers && \
+-		start_beat || cr=1
++		start_beat && \
++		start_camera || cr=1
+ 
+ 	eoutdent
+ 	eend ${cr}
+@@ -176,6 +209,7 @@
+ 	celery_chdir
+ 	stop_workers || cr=1
+ 	stop_beat || cr=1
++	stop_camera || cr=1
+ 
+ 	eoutdent
+ 	eend ${cr}
+@@ -192,6 +226,7 @@
+ 	celery_chdir
+ 	restart_workers || cr=1
+ 	stop_beat && start_beat || cr=1
++	stop_camera && start_camera || cr=1
+ 
+ 	eoutdent
+ 	eend ${cr}
